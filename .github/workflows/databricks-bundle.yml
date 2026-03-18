@@ -1,0 +1,39 @@
+# Validate and optionally deploy the Databricks Asset Bundle
+# Secrets: DATABRICKS_HOST, DATABRICKS_TOKEN (or use OIDC)
+
+name: Databricks Bundle
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Databricks CLI
+        run: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+
+      - name: Validate bundle
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: databricks bundle validate -t dev
+
+  # Uncomment and adjust to deploy (e.g. dev on PR, prod on main)
+  # deploy:
+  #   needs: validate
+  #   if: github.ref == 'refs/heads/main'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - run: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+  #     - name: Deploy to dev
+  #       env:
+  #         DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+  #         DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+  #       run: databricks bundle deploy -t dev

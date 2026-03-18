@@ -1,0 +1,31 @@
+# Databricks Asset Bundle - main configuration
+# See: https://docs.databricks.com/dev-tools/bundles/
+
+bundle:
+  name: databricks_cicd_with_vibe
+
+# Set your workspace host (or use CLI profile / env vars)
+workspace:
+  host: https://your-workspace.cloud.databricks.com
+
+# Environments (use: databricks bundle deploy -t dev --profile <profile>)
+targets:
+  dev:
+    default: true
+    mode: development
+    workspace:
+      root_path: /Users/${workspace.current_user.userName}/.bundle/${bundle.name}/dev
+
+  staging:
+    mode: production
+    workspace:
+      root_path: /Shared/.bundle/${bundle.name}/staging
+
+  prod:
+    mode: production
+    workspace:
+      root_path: /Shared/.bundle/${bundle.name}/prod
+
+# Include all resource YAML under resources/
+include:
+  - resources/**/*.yml

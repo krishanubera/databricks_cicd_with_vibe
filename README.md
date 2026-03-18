@@ -14,20 +14,25 @@ Vibe coding is an iterative, AI-assisted development style where you describe wh
 
 Together, this gives you a workflow where you can “vibe code” your Databricks assets in Cursor and have them automatically validated and deployed via GitHub Actions.
 
-## Project Structure (Typical DAB Layout)
+## Project Structure (Option A – bundle at repo root)
 
 ```
 databricks_cicd_with_vibe/
 ├── README.md                 # This file
+├── databricks.yml            # Bundle configuration (main entry)
 ├── .github/
-│   └── workflows/            # GitHub Actions for validate/deploy
-│       └── databricks-bundle.yml
+│   └── workflows/
+│       └── databricks-bundle.yml   # GitHub Actions validate/deploy
+├── resources/
+│   ├── jobs/                 # Job definitions (*.yml)
+│   ├── pipelines/           # DLT pipeline definitions
+│   ├── apps/                 # App definitions
+│   ├── models/               # Model definitions
+│   └── catalogs/             # Unity Catalog (catalogs, schemas, etc.)
 ├── src/
-│   └── <bundle_name>/        # Your DAB project
-│       ├── databricks.yml    # Bundle configuration
-│       ├── resources/        # Jobs, pipelines, etc.
-│       └── ...
-└── ...
+│   ├── notebooks/            # Notebooks used by jobs/pipelines
+│   └── python/               # Shared Python modules
+└── tests/                    # Local unit tests
 ```
 
 ## Prerequisites
@@ -51,8 +56,7 @@ databricks_cicd_with_vibe/
 
 3. **Validate locally**
    ```bash
-   cd src/<bundle_name>
-   databricks bundle validate -e <environment>
+   databricks bundle validate -t dev --profile <your-profile>
    ```
 
 4. **Deploy via GitHub Actions**  
