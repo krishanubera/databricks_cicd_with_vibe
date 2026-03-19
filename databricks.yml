@@ -1,5 +1,6 @@
 # Databricks Asset Bundle - main configuration
 # See: https://docs.databricks.com/dev-tools/bundles/
+# Catalog resources require direct deployment: export DATABRICKS_BUNDLE_ENGINE=direct (CI sets this)
 
 bundle:
   name: databricks_cicd_with_vibe

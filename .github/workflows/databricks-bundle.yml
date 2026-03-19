@@ -1,4 +1,5 @@
 # Secrets: DATABRICKS_HOST, DATABRICKS_TOKEN
+# Direct bundle engine required for Unity Catalog catalog resources (see resources/catalogs/)
 
 name: Deploy to Databricks
 
@@ -24,6 +25,7 @@ on:
 env:
   DATABRICKS_CLI_VERSION: 0.240.0
   BUNDLE_VERSION: 0.240.0
+  DATABRICKS_BUNDLE_ENGINE: direct
 
 jobs:
   deploy:
