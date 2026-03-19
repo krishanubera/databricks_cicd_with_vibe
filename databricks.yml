@@ -4,9 +4,7 @@
 bundle:
   name: databricks_cicd_with_vibe
 
-# Set your workspace host (or use CLI profile / env vars)
-workspace:
-  host: https://your-workspace.cloud.databricks.com
+# Workspace host: from DATABRICKS_HOST (CI) or CLI profile — omit here so env auth applies
 
 # Environments (use: databricks bundle deploy -t dev --profile <profile>)
 targets:
