@@ -1,4 +1,4 @@
-# Schema `diagnostics` in catalog `cicd_with_vibe`.
+# Schema `diagnostics` and UC volume in catalog `cicd_with_vibe`.
 # Create the catalog manually (UI with Default Storage, or SQL with MANAGED LOCATION) — bundle
 # catalog resources require a storage root / managed location that your workspace may not expose via API.
 
@@ -8,3 +8,13 @@ resources:
       name: diagnostics
       catalog_name: cicd_with_vibe
       comment: Clinical and laboratory diagnostics data (e.g. lab results)
+
+  # Managed volume: files live under schema/catalog storage (no external URL).
+  # Path after deploy: dbfs:/Volumes/cicd_with_vibe/diagnostics/diagnostics_data/
+  volumes:
+    diagnostics_data:
+      catalog_name: cicd_with_vibe
+      schema_name: diagnostics
+      name: diagnostics_data
+      volume_type: MANAGED
+      comment: Data files for diagnostics (CSV, JSON, etc.)
