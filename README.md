@@ -62,6 +62,10 @@ databricks_cicd_with_vibe/
 4. **Deploy via GitHub Actions**  
    Push to your branch; the workflow can run `databricks bundle validate` and optionally `databricks bundle deploy` (e.g. to dev on PR, to prod on merge to main).
 
+## Unity Catalog
+
+The bundle deploys the **`results`** schema in catalog **`cicd_with_vibe`**. Create the catalog **once** in your workspace (Data Explorer UI with Default Storage, or `CREATE CATALOG ... MANAGED LOCATION '...'`). The bundle does **not** create the catalog, because API-created catalogs often need an explicit managed location when your metastore has no default storage root.
+
 ## GitHub Actions Setup
 
 Store these as repository secrets (or environment secrets):

@@ -1,6 +1,6 @@
 # Databricks Asset Bundle - main configuration
 # See: https://docs.databricks.com/dev-tools/bundles/
-# Catalog resources require direct deployment: export DATABRICKS_BUNDLE_ENGINE=direct (CI sets this)
+# UC schema in bundle: export DATABRICKS_BUNDLE_ENGINE=direct (CI sets this). Create catalog cicd_with_vibe manually.
 
 bundle:
   name: databricks_cicd_with_vibe

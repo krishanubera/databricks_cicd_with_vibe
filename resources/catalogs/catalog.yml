@@ -1,14 +1,10 @@
-# Unity Catalog: catalog cicd_with_vibe and schema results
-# Deployed with: databricks bundle deploy -t <target> --profile <profile>
+# Schema `results` in catalog `cicd_with_vibe`.
+# Create the catalog manually (UI with Default Storage, or SQL with MANAGED LOCATION) — bundle
+# catalog resources require a storage root / managed location that your workspace may not expose via API.
 
 resources:
-  catalogs:
-    cicd_with_vibe:
-      name: cicd_with_vibe
-      comment: Catalog for cicd_with_vibe bundle
-
   schemas:
     results:
       name: results
-      catalog_name: ${resources.catalogs.cicd_with_vibe.name}
+      catalog_name: cicd_with_vibe
       comment: Schema for results data

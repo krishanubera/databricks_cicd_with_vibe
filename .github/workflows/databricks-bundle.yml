@@ -1,5 +1,5 @@
 # Secrets: DATABRICKS_HOST, DATABRICKS_TOKEN
-# Direct bundle engine required for Unity Catalog catalog resources (see resources/catalogs/)
+# Direct bundle engine (Unity Catalog schema in resources/catalogs/; catalog created manually in workspace)
 
 name: Deploy to Databricks
 
