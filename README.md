@@ -64,7 +64,7 @@ databricks_cicd_with_vibe/
 
 ## Unity Catalog
 
-The bundle deploys the **`results`** schema in catalog **`cicd_with_vibe`**. Create the catalog **once** in your workspace (Data Explorer UI with Default Storage, or `CREATE CATALOG ... MANAGED LOCATION '...'`). The bundle does **not** create the catalog, because API-created catalogs often need an explicit managed location when your metastore has no default storage root.
+The bundle deploys the **`diagnostics`** schema in catalog **`cicd_with_vibe`**. Create the catalog **once** in your workspace (Data Explorer UI with Default Storage, or `CREATE CATALOG ... MANAGED LOCATION '...'`). The bundle does **not** create the catalog, because API-created catalogs often need an explicit managed location when your metastore has no default storage root.
 
 ## GitHub Actions Setup
 

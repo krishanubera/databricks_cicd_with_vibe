@@ -11,9 +11,10 @@ bundle:
 targets:
   dev:
     default: true
-    mode: development
+    # production mode avoids [dev <username>] prefixes on deployed resource names
+    mode: production
     workspace:
-      root_path: /Users/${workspace.current_user.userName}/.bundle/${bundle.name}/dev
+      root_path: /Shared/.bundle/${bundle.name}/dev
 
   staging:
     mode: production

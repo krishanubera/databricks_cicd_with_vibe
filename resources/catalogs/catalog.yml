@@ -1,10 +1,10 @@
-# Schema `results` in catalog `cicd_with_vibe`.
+# Schema `diagnostics` in catalog `cicd_with_vibe`.
 # Create the catalog manually (UI with Default Storage, or SQL with MANAGED LOCATION) — bundle
 # catalog resources require a storage root / managed location that your workspace may not expose via API.
 
 resources:
   schemas:
-    results:
-      name: results
+    diagnostics:
+      name: diagnostics
       catalog_name: cicd_with_vibe
-      comment: Schema for results data
+      comment: Clinical and laboratory diagnostics data (e.g. lab results)
