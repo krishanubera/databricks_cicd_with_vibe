@@ -1,25 +1,32 @@
-# Secrets: DATABRICKS_HOST, DATABRICKS_TOKEN
-# Direct bundle engine (Unity Catalog schema in resources/catalogs/; catalog created manually in workspace)
+# One Databricks workspace per bundle target — set host + token for each (repository Secrets):
+#   DATABRICKS_DEV_HOST, DATABRICKS_DEV_TOKEN   → bundle target dev
+#   DATABRICKS_TEST_HOST, DATABRICKS_TEST_TOKEN → bundle target test
+#   DATABRICKS_PROD_HOST, DATABRICKS_PROD_TOKEN → bundle target prod
+# Direct bundle engine (Unity Catalog schema in resources/catalogs/; create catalog in each workspace as needed)
 
 name: Deploy to Databricks
 
+# feature_* push → "dev". release_* push → "test".
+# PRs targeting release_* → "test" (validates/deploys the merge preview for that release branch).
+# main: no automatic deploy — run manually and choose prod (checkout main in the UI).
 on:
   push:
     branches:
-      - main
-      - develop
+      - 'feature_*'
+      - 'release_*'
   pull_request:
     branches:
-      - main
+      - 'release_*'
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Deployment environment'
+        description: 'Bundle target (each uses its own workspace secrets)'
         required: true
-        default: 'dev'
+        default: 'prod'
         type: choice
         options:
           - dev
+          - test
           - prod
 
 env:
@@ -58,28 +65,58 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "target=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "pull_request" ] && [[ "${{ github.base_ref }}" == release_* ]]; then
+            # PR into release_* → test (github.ref is refs/pull/.../merge, so use base_ref)
+            echo "target=test" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/heads/release_* ]]; then
+            echo "target=test" >> $GITHUB_OUTPUT
           else
+            # push on feature_* (see on:)
             echo "target=dev" >> $GITHUB_OUTPUT
           fi
 
       - name: Configure Databricks authentication
+        env:
+          DEV_HOST: ${{ secrets.DATABRICKS_DEV_HOST }}
+          DEV_TOKEN: ${{ secrets.DATABRICKS_DEV_TOKEN }}
+          TEST_HOST: ${{ secrets.DATABRICKS_TEST_HOST }}
+          TEST_TOKEN: ${{ secrets.DATABRICKS_TEST_TOKEN }}
+          PROD_HOST: ${{ secrets.DATABRICKS_PROD_HOST }}
+          PROD_TOKEN: ${{ secrets.DATABRICKS_PROD_TOKEN }}
         run: |
-          echo "DATABRICKS_HOST=${{ secrets.DATABRICKS_HOST }}" >> $GITHUB_ENV
-          echo "DATABRICKS_TOKEN=${{ secrets.DATABRICKS_TOKEN }}" >> $GITHUB_ENV
+          TARGET="${{ steps.set-target.outputs.target }}"
+          case "$TARGET" in
+            dev)
+              H="$DEV_HOST"; T="$DEV_TOKEN"
+              MISSING_MSG="Set repository secrets: DATABRICKS_DEV_HOST and DATABRICKS_DEV_TOKEN"
+              ;;
+            test)
+              H="$TEST_HOST"; T="$TEST_TOKEN"
+              MISSING_MSG="Set repository secrets: DATABRICKS_TEST_HOST and DATABRICKS_TEST_TOKEN"
+              ;;
+            prod)
+              H="$PROD_HOST"; T="$PROD_TOKEN"
+              MISSING_MSG="Set repository secrets: DATABRICKS_PROD_HOST and DATABRICKS_PROD_TOKEN"
+              ;;
+            *)
+              echo "❌ Unknown bundle target: $TARGET"
+              exit 1
+              ;;
+          esac
+          if [ -z "$H" ] || [ -z "$T" ]; then
+            echo "❌ $MISSING_MSG (host and token required for this environment)."
+            exit 1
+          fi
+          echo "DATABRICKS_HOST=$H" >> $GITHUB_ENV
+          echo "DATABRICKS_TOKEN=$T" >> $GITHUB_ENV
 
       - name: Validate bundle configuration
         run: |
           databricks bundle validate -t ${{ steps.set-target.outputs.target }}
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
 
       - name: Deploy bundle to Databricks
         run: |
           databricks bundle deploy -t ${{ steps.set-target.outputs.target }}
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
 
       # UC volume: resources/catalogs/catalog.yml → cicd_with_vibe.diagnostics.diagnostics_data
       - name: Set diagnostics volume path
@@ -112,15 +149,17 @@ jobs:
           else
             echo "✅ Uploaded ${uploaded} CSV file(s) to ${VOLUME_PATH}/"
           fi
-        env:
-          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
-          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
 
       - name: Deployment summary
         run: |
           echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment**: ${{ steps.set-target.outputs.target }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bundle target**: ${{ steps.set-target.outputs.target }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "- **PR**: \`${{ github.head_ref }}\` → \`${{ github.base_ref }}\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Event**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Bundle**: databricks_cicd_with_vibe" >> $GITHUB_STEP_SUMMARY
           echo "- **Volume upload**: \`${{ steps.diagnostics-volume.outputs.volume_path }}/\` ← \`data/*.csv\`" >> $GITHUB_STEP_SUMMARY

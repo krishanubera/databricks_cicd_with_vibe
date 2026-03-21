@@ -16,6 +16,12 @@ targets:
     workspace:
       root_path: /Shared/.bundle/${bundle.name}/dev
 
+  # CI: push to release_* → deploy -t test (same workspace as dev/prod; separate bundle root_path)
+  test:
+    mode: production
+    workspace:
+      root_path: /Shared/.bundle/${bundle.name}/test
+
   staging:
     mode: production
     workspace:

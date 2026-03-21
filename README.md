@@ -68,15 +68,20 @@ The bundle deploys the **`diagnostics`** schema in catalog **`cicd_with_vibe`**.
 
 ## GitHub Actions Setup
 
-Store these as repository secrets (or environment secrets):
+The workflow deploys to **three bundle targets** (`dev`, `test`, `prod`), each intended to use a **different Databricks workspace**. Add these **repository secrets** (host + personal access token per workspace):
 
-- `DATABRICKS_HOST` – e.g. `https://<workspace>.cloud.databricks.com`
-- `DATABRICKS_TOKEN` – token with access to deploy and run jobs/pipelines
+| Secret | Purpose |
+|--------|---------|
+| `DATABRICKS_DEV_HOST` | Dev workspace URL, e.g. `https://<dev-workspace>.cloud.databricks.com` |
+| `DATABRICKS_DEV_TOKEN` | Token for dev workspace |
+| `DATABRICKS_TEST_HOST` | Test workspace URL |
+| `DATABRICKS_TEST_TOKEN` | Token for test workspace |
+| `DATABRICKS_PROD_HOST` | Production workspace URL |
+| `DATABRICKS_PROD_TOKEN` | Token for production workspace |
 
-Your workflow can:
+Create the Unity Catalog catalog (e.g. `cicd_with_vibe`) in **each** workspace if you deploy bundle resources there.
 
-- Run `databricks bundle validate -e <env>` on every push/PR.
-- Run `databricks bundle deploy -e <env>` on specific branches or tags (e.g. `main` → production).
+Your workflow runs `databricks bundle validate` / `deploy` with the target that matches the branch or manual choice (see `.github/workflows/databricks-bundle.yml`).
 
 ## Vibe Coding with Cursor
 
