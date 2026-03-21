@@ -81,6 +81,41 @@ jobs:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
 
+      # UC volume: resources/catalogs/catalog.yml → cicd_with_vibe.diagnostics.diagnostics_data
+      - name: Set diagnostics volume path
+        id: diagnostics-volume
+        run: |
+          echo "volume_path=dbfs:/Volumes/cicd_with_vibe/diagnostics/diagnostics_data" >> $GITHUB_OUTPUT
+
+      - name: Upload CSV files to managed volume
+        run: |
+          VOLUME_PATH="${{ steps.diagnostics-volume.outputs.volume_path }}"
+
+          if [ ! -d "data" ]; then
+            echo "⚠️  Directory not found: data"
+            exit 1
+          fi
+
+          echo "Uploading CSV files to ${VOLUME_PATH}/ ..."
+          uploaded=0
+          for file in data/*.csv; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              echo "Uploading ${filename}..."
+              databricks fs cp --overwrite "$file" "${VOLUME_PATH}/${filename}"
+              uploaded=$((uploaded + 1))
+            fi
+          done
+
+          if [ "$uploaded" -eq 0 ]; then
+            echo "⚠️  No .csv files in data/ — nothing to upload."
+          else
+            echo "✅ Uploaded ${uploaded} CSV file(s) to ${VOLUME_PATH}/"
+          fi
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
       - name: Deployment summary
         run: |
           echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
@@ -88,3 +123,4 @@ jobs:
           echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Bundle**: databricks_cicd_with_vibe" >> $GITHUB_STEP_SUMMARY
+          echo "- **Volume upload**: \`${{ steps.diagnostics-volume.outputs.volume_path }}/\` ← \`data/*.csv\`" >> $GITHUB_STEP_SUMMARY
