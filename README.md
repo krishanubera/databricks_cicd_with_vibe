@@ -75,6 +75,11 @@ Add these **repository secrets** (host + token per workspace):
 
 The workflow uploads `data/*.csv` to a `dbfs:/Volumes/...` path defined in the workflow—create the catalog/schema/volume in Unity Catalog yourself if that path should exist.
 
+### Deploy notes
+
+- **Shared bundle path** (`/Workspace/Shared/.bundle/...`): the bundle sets `permissions` for `users` with `CAN_MANAGE` to match Databricks’ recommendation when using `/Shared`. For a stricter path, use a user-scoped `root_path` (see [bundle deployment modes](https://docs.databricks.com/en/dev-tools/bundles/deployment-modes.html)).
+- **Destructive UC actions / `--auto-approve`**: if a previous deploy created Unity Catalog resources (schemas, volumes) that are **no longer** in this bundle, the next deploy may **delete** them to match the bundle. GitHub Actions runs `databricks bundle deploy ... --auto-approve` so the job does not hang. For local CLI: add `--auto-approve` when you intend to apply that sync (or keep the UC resources out of bundle state by managing them only in the workspace).
+
 ## Vibe Coding with Cursor
 
 - **Describe the outcome**: e.g. “I need a job that runs at 2am and runs this notebook with these parameters.”

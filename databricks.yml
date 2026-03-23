@@ -7,22 +7,32 @@ bundle:
 # Workspace host: from DATABRICKS_HOST (CI) or CLI profile — omit here so env auth applies
 
 # Environments (use: databricks bundle deploy -t dev --profile <profile>)
+# /Shared/.bundle/... is world-writable; permissions below acknowledge intentional shared access (CLI warning).
 targets:
   dev:
     default: true
     # production mode avoids [dev <username>] prefixes on deployed resource names
     mode: production
+    permissions:
+      - group_name: users
+        level: CAN_MANAGE
     workspace:
       root_path: /Shared/.bundle/${bundle.name}/dev
 
   # CI: push to release_* → deploy -t test (same workspace as dev/prod; separate bundle root_path)
   test:
     mode: production
+    permissions:
+      - group_name: users
+        level: CAN_MANAGE
     workspace:
       root_path: /Shared/.bundle/${bundle.name}/test
 
   prod:
     mode: production
+    permissions:
+      - group_name: users
+        level: CAN_MANAGE
     workspace:
       root_path: /Shared/.bundle/${bundle.name}/prod
 
