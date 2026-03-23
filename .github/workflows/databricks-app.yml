@@ -1,15 +1,7 @@
-# One Databricks workspace per bundle target — set host + token for each (repository Secrets):
-#   DATABRICKS_DEV_HOST, DATABRICKS_DEV_TOKEN   → bundle target dev
-#   DATABRICKS_TEST_HOST, DATABRICKS_TEST_TOKEN → bundle target test
-#   DATABRICKS_PROD_HOST, DATABRICKS_PROD_TOKEN → bundle target prod
-# Two bundles: bundles/unity-catalog (UC volume) first, then app bundle at repo root.
-# Direct bundle engine for UC: DATABRICKS_BUNDLE_ENGINE (set below). Create catalog/schema per workspace as needed.
+# App bundle at repo root (jobs, pipelines, …) + optional CSV upload to a volume path you manage.
 
-name: Deploy to Databricks
+name: Deploy app bundle
 
-# feature_* push → "dev". release_* push → "test".
-# PRs targeting release_* → "test" (validates/deploys the merge preview for that release branch).
-# main: no automatic deploy — run manually and choose prod (checkout main in the UI).
 on:
   push:
     branches:
@@ -21,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Bundle target (each uses its own workspace secrets)'
+        description: 'Bundle target (dev / test / prod workspace)'
         required: true
         default: 'prod'
         type: choice
@@ -31,8 +23,6 @@ on:
           - prod
 
 env:
-  DATABRICKS_CLI_VERSION: 0.240.0
-  BUNDLE_VERSION: 0.240.0
   DATABRICKS_BUNDLE_ENGINE: direct
 
 jobs:
@@ -67,12 +57,10 @@ jobs:
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "target=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
           elif [ "${{ github.event_name }}" == "pull_request" ] && [[ "${{ github.base_ref }}" == release_* ]]; then
-            # PR into release_* → test (github.ref is refs/pull/.../merge, so use base_ref)
             echo "target=test" >> $GITHUB_OUTPUT
           elif [[ "${{ github.ref }}" == refs/heads/release_* ]]; then
             echo "target=test" >> $GITHUB_OUTPUT
           else
-            # push on feature_* (see on:)
             echo "target=dev" >> $GITHUB_OUTPUT
           fi
 
@@ -111,31 +99,20 @@ jobs:
           echo "DATABRICKS_HOST=$H" >> $GITHUB_ENV
           echo "DATABRICKS_TOKEN=$T" >> $GITHUB_ENV
 
-      - name: Validate Unity Catalog bundle
-        working-directory: bundles/unity-catalog
-        run: |
-          databricks bundle validate -t ${{ steps.set-target.outputs.target }}
-
       - name: Validate app bundle
         run: |
           databricks bundle validate -t ${{ steps.set-target.outputs.target }}
-
-      - name: Deploy Unity Catalog bundle
-        working-directory: bundles/unity-catalog
-        run: |
-          databricks bundle deploy -t ${{ steps.set-target.outputs.target }}
 
       - name: Deploy app bundle
         run: |
           databricks bundle deploy -t ${{ steps.set-target.outputs.target }}
 
-      # UC volume from bundles/unity-catalog → cicd_with_vibe.diagnostics.diagnostics_data
-      - name: Set diagnostics volume path
+      - name: Set data upload path
         id: diagnostics-volume
         run: |
           echo "volume_path=dbfs:/Volumes/cicd_with_vibe/diagnostics/diagnostics_data" >> $GITHUB_OUTPUT
 
-      - name: Upload CSV files to managed volume
+      - name: Upload CSV files to volume path
         run: |
           VOLUME_PATH="${{ steps.diagnostics-volume.outputs.volume_path }}"
 
@@ -163,8 +140,9 @@ jobs:
 
       - name: Deployment summary
         run: |
-          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **Bundle target**: ${{ steps.set-target.outputs.target }}" >> $GITHUB_STEP_SUMMARY
+          echo "## App bundle deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bundle**: \`databricks_cicd_with_vibe\` (repo root)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target**: ${{ steps.set-target.outputs.target }}" >> $GITHUB_STEP_SUMMARY
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             echo "- **PR**: \`${{ github.head_ref }}\` → \`${{ github.base_ref }}\`" >> $GITHUB_STEP_SUMMARY
           else
@@ -172,5 +150,4 @@ jobs:
           fi
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Event**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Bundles**: \`databricks_cicd_uc\` (Unity Catalog) + \`databricks_cicd_with_vibe\` (app)" >> $GITHUB_STEP_SUMMARY
           echo "- **Volume upload**: \`${{ steps.diagnostics-volume.outputs.volume_path }}/\` ← \`data/*.csv\`" >> $GITHUB_STEP_SUMMARY

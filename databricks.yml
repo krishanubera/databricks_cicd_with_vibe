@@ -1,7 +1,5 @@
 # App / data product bundle (jobs, pipelines, notebooks, etc.)
-# Unity Catalog volume + UC-only resources: bundles/unity-catalog/ (deploy first in CI)
 # See: https://docs.databricks.com/dev-tools/bundles/
-# UC deploy: export DATABRICKS_BUNDLE_ENGINE=direct (CI sets this)
 
 bundle:
   name: databricks_cicd_with_vibe
@@ -33,6 +31,8 @@ targets:
     workspace:
       root_path: /Shared/.bundle/${bundle.name}/prod
 
-# Include all resource YAML under resources/
 include:
-  - resources/**/*.yml
+  - resources/jobs/**/*.yml
+  - resources/pipelines/**/*.yml
+  - resources/models/**/*.yml
+  - resources/apps/**/*.yml

@@ -1,3 +1,0 @@
-# App bundle resources — add jobs, pipelines, dashboards, etc. here or under resources/<type>/
-# Unity Catalog (volumes) lives in bundles/unity-catalog/
-resources: {}
