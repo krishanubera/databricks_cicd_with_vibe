@@ -1,0 +1,38 @@
+# Unity Catalog objects used by the app workflow CSV upload:
+# dbfs:/Volumes/cicd_with_vibe/diagnostics/diagnostics_data
+#
+# Deploy order: run this bundle (or the unity-catalog GitHub workflow) before the app bundle
+# if the volume does not exist yet.
+
+resources:
+  catalogs:
+    cicd_with_vibe:
+      name: cicd_with_vibe
+      comment: Catalog for databricks_cicd_with_vibe demo (CI/CD + volume data)
+      grants:
+        - principal: users
+          privileges:
+            - USE_CATALOG
+
+  schemas:
+    diagnostics:
+      name: diagnostics
+      catalog_name: ${resources.catalogs.cicd_with_vibe.name}
+      comment: Schema for diagnostics lab data and volumes
+      grants:
+        - principal: users
+          privileges:
+            - USE_SCHEMA
+
+  volumes:
+    diagnostics_data:
+      name: diagnostics_data
+      catalog_name: ${resources.catalogs.cicd_with_vibe.name}
+      schema_name: ${resources.schemas.diagnostics.name}
+      volume_type: MANAGED
+      comment: Managed volume for workflow CSV uploads (data/*.csv)
+      grants:
+        - principal: users
+          privileges:
+            - READ_FILES
+            - WRITE_FILES

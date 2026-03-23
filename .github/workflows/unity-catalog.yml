@@ -1,6 +1,6 @@
-# App bundle at repo root (jobs, pipelines, …) + optional CSV upload to a volume path you manage.
+# Unity Catalog bundle under bundles/unity-catalog — catalogs, schemas, volumes only.
 
-name: Deploy app bundle
+name: Deploy Unity Catalog bundle
 
 on:
   # Manual: Actions → select this workflow → "Run workflow" (choose dev / test / prod)
@@ -19,9 +19,17 @@ on:
     branches:
       - 'feature_*'
       - 'release_*'
+    paths:
+      - 'bundles/unity-catalog/**'
   pull_request:
     branches:
       - 'release_*'
+    paths:
+      - 'bundles/unity-catalog/**'
+
+defaults:
+  run:
+    working-directory: bundles/unity-catalog
 
 env:
   DATABRICKS_BUNDLE_ENGINE: direct
@@ -100,51 +108,21 @@ jobs:
           echo "DATABRICKS_HOST=$H" >> $GITHUB_ENV
           echo "DATABRICKS_TOKEN=$T" >> $GITHUB_ENV
 
-      - name: Validate app bundle
+      - name: Validate Unity Catalog bundle
         run: |
           databricks bundle validate -t ${{ steps.set-target.outputs.target }}
 
-      - name: Deploy app bundle
+      - name: Deploy Unity Catalog bundle
         run: |
-          # --auto-approve: required in CI (no TTY). Also applies destructive sync when bundle no longer defines UC resources that a previous deploy created.
+          # --auto-approve: required in CI (no TTY). Removing UC resources from the bundle may delete them on deploy.
           databricks bundle deploy -t ${{ steps.set-target.outputs.target }} --auto-approve
-
-      - name: Set data upload path
-        id: diagnostics-volume
-        run: |
-          echo "volume_path=dbfs:/Volumes/cicd_with_vibe/diagnostics/diagnostics_data" >> $GITHUB_OUTPUT
-
-      - name: Upload CSV files to volume path
-        run: |
-          VOLUME_PATH="${{ steps.diagnostics-volume.outputs.volume_path }}"
-
-          if [ ! -d "data" ]; then
-            echo "⚠️  Directory not found: data"
-            exit 1
-          fi
-
-          echo "Uploading CSV files to ${VOLUME_PATH}/ ..."
-          uploaded=0
-          for file in data/*.csv; do
-            if [ -f "$file" ]; then
-              filename=$(basename "$file")
-              echo "Uploading ${filename}..."
-              databricks fs cp --overwrite "$file" "${VOLUME_PATH}/${filename}"
-              uploaded=$((uploaded + 1))
-            fi
-          done
-
-          if [ "$uploaded" -eq 0 ]; then
-            echo "⚠️  No .csv files in data/ — nothing to upload."
-          else
-            echo "✅ Uploaded ${uploaded} CSV file(s) to ${VOLUME_PATH}/"
-          fi
 
       - name: Deployment summary
         run: |
-          echo "## App bundle deployment" >> $GITHUB_STEP_SUMMARY
-          echo "- **Bundle**: \`databricks_cicd_with_vibe\` (repo root)" >> $GITHUB_STEP_SUMMARY
+          echo "## Unity Catalog bundle deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bundle**: \`databricks_cicd_with_vibe_uc\` (\`bundles/unity-catalog\`)" >> $GITHUB_STEP_SUMMARY
           echo "- **Target**: ${{ steps.set-target.outputs.target }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Resources**: catalog \`cicd_with_vibe\`, schema \`diagnostics\`, volume \`diagnostics_data\`" >> $GITHUB_STEP_SUMMARY
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             echo "- **PR**: \`${{ github.head_ref }}\` → \`${{ github.base_ref }}\`" >> $GITHUB_STEP_SUMMARY
           else
@@ -152,4 +130,3 @@ jobs:
           fi
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Event**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Volume upload**: \`${{ steps.diagnostics-volume.outputs.volume_path }}/\` ← \`data/*.csv\`" >> $GITHUB_STEP_SUMMARY

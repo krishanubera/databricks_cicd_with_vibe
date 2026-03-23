@@ -1,0 +1,40 @@
+# Unity Catalog bundle (catalog, schema, volume) — separate from the app bundle at repo root.
+# Requires direct deployment engine for catalogs. See: https://docs.databricks.com/en/dev-tools/bundles/resources.html
+# Local: cd bundles/unity-catalog && databricks bundle validate -t dev --profile <profile>
+
+bundle:
+  name: databricks_cicd_with_vibe_uc
+
+# Unity Catalog resources require the direct deployment engine. Set locally:
+#   $env:DATABRICKS_BUNDLE_ENGINE="direct"   (PowerShell)
+#   export DATABRICKS_BUNDLE_ENGINE=direct   (bash)
+# GitHub Actions workflow sets this in env.
+
+targets:
+  dev:
+    default: true
+    mode: production
+    permissions:
+      - group_name: users
+        level: CAN_MANAGE
+    workspace:
+      root_path: /Shared/.bundle/${bundle.name}/dev
+
+  test:
+    mode: production
+    permissions:
+      - group_name: users
+        level: CAN_MANAGE
+    workspace:
+      root_path: /Shared/.bundle/${bundle.name}/test
+
+  prod:
+    mode: production
+    permissions:
+      - group_name: users
+        level: CAN_MANAGE
+    workspace:
+      root_path: /Shared/.bundle/${bundle.name}/prod
+
+include:
+  - resources/**/*.yml
