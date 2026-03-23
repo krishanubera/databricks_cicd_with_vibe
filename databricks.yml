@@ -21,11 +21,6 @@ targets:
     workspace:
       root_path: /Shared/.bundle/${bundle.name}/test
 
-  staging:
-    mode: production
-    workspace:
-      root_path: /Shared/.bundle/${bundle.name}/staging
-
   prod:
     mode: production
     workspace:
