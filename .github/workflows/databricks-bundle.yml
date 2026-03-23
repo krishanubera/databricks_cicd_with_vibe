@@ -2,7 +2,8 @@
 #   DATABRICKS_DEV_HOST, DATABRICKS_DEV_TOKEN   → bundle target dev
 #   DATABRICKS_TEST_HOST, DATABRICKS_TEST_TOKEN → bundle target test
 #   DATABRICKS_PROD_HOST, DATABRICKS_PROD_TOKEN → bundle target prod
-# Direct bundle engine (Unity Catalog schema in resources/catalogs/; create catalog in each workspace as needed)
+# Two bundles: bundles/unity-catalog (UC volume) first, then app bundle at repo root.
+# Direct bundle engine for UC: DATABRICKS_BUNDLE_ENGINE (set below). Create catalog/schema per workspace as needed.
 
 name: Deploy to Databricks
 
@@ -110,15 +111,25 @@ jobs:
           echo "DATABRICKS_HOST=$H" >> $GITHUB_ENV
           echo "DATABRICKS_TOKEN=$T" >> $GITHUB_ENV
 
-      - name: Validate bundle configuration
+      - name: Validate Unity Catalog bundle
+        working-directory: bundles/unity-catalog
         run: |
           databricks bundle validate -t ${{ steps.set-target.outputs.target }}
 
-      - name: Deploy bundle to Databricks
+      - name: Validate app bundle
+        run: |
+          databricks bundle validate -t ${{ steps.set-target.outputs.target }}
+
+      - name: Deploy Unity Catalog bundle
+        working-directory: bundles/unity-catalog
         run: |
           databricks bundle deploy -t ${{ steps.set-target.outputs.target }}
 
-      # UC volume: resources/catalogs/catalog.yml → cicd_with_vibe.diagnostics.diagnostics_data
+      - name: Deploy app bundle
+        run: |
+          databricks bundle deploy -t ${{ steps.set-target.outputs.target }}
+
+      # UC volume from bundles/unity-catalog → cicd_with_vibe.diagnostics.diagnostics_data
       - name: Set diagnostics volume path
         id: diagnostics-volume
         run: |
@@ -161,5 +172,5 @@ jobs:
           fi
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Event**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Bundle**: databricks_cicd_with_vibe" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bundles**: \`databricks_cicd_uc\` (Unity Catalog) + \`databricks_cicd_with_vibe\` (app)" >> $GITHUB_STEP_SUMMARY
           echo "- **Volume upload**: \`${{ steps.diagnostics-volume.outputs.volume_path }}/\` ← \`data/*.csv\`" >> $GITHUB_STEP_SUMMARY

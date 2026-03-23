@@ -1,6 +1,7 @@
-# Databricks Asset Bundle - main configuration
+# App / data product bundle (jobs, pipelines, notebooks, etc.)
+# Unity Catalog volume + UC-only resources: bundles/unity-catalog/ (deploy first in CI)
 # See: https://docs.databricks.com/dev-tools/bundles/
-# UC schema in bundle: export DATABRICKS_BUNDLE_ENGINE=direct (CI sets this). Create catalog cicd_with_vibe manually.
+# UC deploy: export DATABRICKS_BUNDLE_ENGINE=direct (CI sets this)
 
 bundle:
   name: databricks_cicd_with_vibe

@@ -1,0 +1,12 @@
+# Managed volume under existing schema `diagnostics` in catalog `cicd_with_vibe`.
+# Create catalog + schema outside this bundle (SQL/UI) if they do not exist.
+# Path: dbfs:/Volumes/cicd_with_vibe/diagnostics/diagnostics_data/
+
+resources:
+  volumes:
+    diagnostics_data:
+      catalog_name: cicd_with_vibe
+      schema_name: diagnostics
+      name: diagnostics_data
+      volume_type: MANAGED
+      comment: Data files for diagnostics (CSV, JSON, etc.)

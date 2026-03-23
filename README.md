@@ -14,25 +14,30 @@ Vibe coding is an iterative, AI-assisted development style where you describe wh
 
 Together, this gives you a workflow where you can “vibe code” your Databricks assets in Cursor and have them automatically validated and deployed via GitHub Actions.
 
-## Project Structure (Option A – bundle at repo root)
+## Project Structure (two bundles)
+
+| Location | Bundle name | Purpose |
+|----------|-------------|---------|
+| Repo root `databricks.yml` | `databricks_cicd_with_vibe` | App resources (jobs, pipelines, notebooks, …) |
+| `bundles/unity-catalog/` | `databricks_cicd_uc` | Unity Catalog volume (and future UC-only resources) |
+
+CI deploys **Unity Catalog first**, then the **app bundle** (same target: `dev` / `test` / `prod`).
 
 ```
 databricks_cicd_with_vibe/
-├── README.md                 # This file
-├── databricks.yml            # Bundle configuration (main entry)
-├── .github/
-│   └── workflows/
-│       └── databricks-bundle.yml   # GitHub Actions validate/deploy
-├── resources/
-│   ├── jobs/                 # Job definitions (*.yml)
-│   ├── pipelines/           # DLT pipeline definitions
-│   ├── apps/                 # App definitions
-│   ├── models/               # Model definitions
-│   └── catalogs/             # Unity Catalog (catalogs, schemas, etc.)
+├── README.md
+├── databricks.yml                 # App bundle
+├── bundles/
+│   └── unity-catalog/
+│       ├── README.md
+│       ├── databricks.yml       # UC bundle (volume, …)
+│       └── resources/
+├── .github/workflows/
+│   └── databricks-bundle.yml
+├── resources/                   # App bundle YAML (jobs, pipelines, …)
+├── data/                        # CSV files uploaded to UC volume in CI
 ├── src/
-│   ├── notebooks/            # Notebooks used by jobs/pipelines
-│   └── python/               # Shared Python modules
-└── tests/                    # Local unit tests
+└── tests/
 ```
 
 ## Prerequisites
@@ -56,6 +61,7 @@ databricks_cicd_with_vibe/
 
 3. **Validate locally**
    ```bash
+   cd bundles/unity-catalog && databricks bundle validate -t dev --profile <your-profile> && cd ../..
    databricks bundle validate -t dev --profile <your-profile>
    ```
 
@@ -64,7 +70,9 @@ databricks_cicd_with_vibe/
 
 ## Unity Catalog
 
-The bundle deploys the **`diagnostics`** schema in catalog **`cicd_with_vibe`**. Create the catalog **once** in your workspace (Data Explorer UI with Default Storage, or `CREATE CATALOG ... MANAGED LOCATION '...'`). The bundle does **not** create the catalog, because API-created catalogs often need an explicit managed location when your metastore has no default storage root.
+Create **`cicd_with_vibe`** (catalog) and **`diagnostics`** (schema) **once** per workspace (UI or SQL). The **UC bundle** (`bundles/unity-catalog/`) only defines the **`diagnostics_data`** managed volume — not the schema — to avoid `SCHEMA_ALREADY_EXISTS` when the schema was created elsewhere.
+
+If the volume already exists, you may see `VOLUME_ALREADY_EXISTS`; adjust the volume in YAML or drop/rename the object in UC.
 
 ## GitHub Actions Setup
 
@@ -81,7 +89,7 @@ The workflow deploys to **three bundle targets** (`dev`, `test`, `prod`), each i
 
 Create the Unity Catalog catalog (e.g. `cicd_with_vibe`) in **each** workspace if you deploy bundle resources there.
 
-Your workflow runs `databricks bundle validate` / `deploy` with the target that matches the branch or manual choice (see `.github/workflows/databricks-bundle.yml`).
+Your workflow runs **both** bundle validate/deploy for the target that matches the branch or manual choice (see `.github/workflows/databricks-bundle.yml`).
 
 ## Vibe Coding with Cursor
 
