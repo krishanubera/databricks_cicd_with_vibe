@@ -106,7 +106,7 @@ jobs:
 
       - name: Deploy app bundle
         run: |
-          # --auto-approve: required in CI (no TTY). Also applies destructive sync when bundle no longer defines UC resources that a previous deploy created.
+          # --auto-approve: required in CI (no TTY). May apply destructive sync if resources were removed from the bundle since a prior deploy.
           databricks bundle deploy -t ${{ steps.set-target.outputs.target }} --auto-approve
 
       - name: Set data upload path
