@@ -3,6 +3,10 @@
 #
 # Deploy order: run this bundle (or the unity-catalog GitHub workflow) before the app bundle
 # if the volume does not exist yet.
+#
+# Grant privileges must match the bundle schema (see Databricks CLI Python docs:
+# databricks.bundles.volumes.VolumeGrantPrivilege). Volumes use READ_VOLUME / WRITE_VOLUME,
+# not READ_FILES / WRITE_FILES (invalid values can prevent the volume from being created).
 
 resources:
   catalogs:
@@ -17,7 +21,8 @@ resources:
   schemas:
     diagnostics:
       name: diagnostics
-      catalog_name: ${resources.catalogs.cicd_with_vibe.name}
+      # Literal parent name avoids any interpolation edge cases during deploy
+      catalog_name: cicd_with_vibe
       comment: Schema for diagnostics lab data and volumes
       grants:
         - principal: users
@@ -27,12 +32,12 @@ resources:
   volumes:
     diagnostics_data:
       name: diagnostics_data
-      catalog_name: ${resources.catalogs.cicd_with_vibe.name}
-      schema_name: ${resources.schemas.diagnostics.name}
+      catalog_name: cicd_with_vibe
+      schema_name: diagnostics
       volume_type: MANAGED
       comment: Managed volume for workflow CSV uploads (data/*.csv)
       grants:
         - principal: users
           privileges:
-            - READ_FILES
-            - WRITE_FILES
+            - READ_VOLUME
+            - WRITE_VOLUME
