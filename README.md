@@ -79,6 +79,7 @@ The workflow uploads `data/*.csv` to `dbfs:/Volumes/cicd_with_vibe/diagnostics/d
 
 - **Shared bundle path** (`/Workspace/Shared/.bundle/...`): the bundle sets `permissions` for `users` with `CAN_MANAGE` to match Databricks’ recommendation when using `/Shared`. For a stricter path, use a user-scoped `root_path` (see [bundle deployment modes](https://docs.databricks.com/en/dev-tools/bundles/deployment-modes.html)).
 - **`--auto-approve`**: GitHub Actions runs `databricks bundle deploy ... --auto-approve` so the job does not hang (no interactive prompt). For local CLI, add `--auto-approve` when you intend to apply the deploy without confirmation.
+- **Finding the pipeline**: After deploy, open **Workflows** → **Lakeflow Pipelines** (or **Delta Live Tables**, depending on workspace UI). The bundle resource name is `diagnostics_lab_results_pipeline`. Pipeline `libraries` paths must be correct relative to the YAML file that defines them (for example, under `resources/pipelines/` use `../../src/...`, not `../src/...`).
 
 ## Vibe Coding with Cursor
 

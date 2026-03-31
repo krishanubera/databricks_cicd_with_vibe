@@ -3,10 +3,16 @@ resources:
     diagnostics_lab_results_pipeline:
       name: diagnostics_lab_results_pipeline
       catalog: cicd_with_vibe
-      schema: diagnostics
+      # Library paths are relative to this YAML file (resources/pipelines/), not the bundle root.
+      target: diagnostics
       channel: CURRENT
       development: false
       serverless: true
       continuous: false
+      # Python DLT sources use `notebook` + path (see bundle pipeline examples).
       libraries:
-        - file: ../src/pipelines/diagnostics_lab_results_pipeline.py
+        - notebook:
+            path: ../../src/pipelines/diagnostics_lab_results_pipeline.py
+      # Helps serverless pipelines resolve sources under the synced bundle tree.
+      configuration:
+        bundle.sourcePath: /Workspace/${workspace.file_path}/src
