@@ -28,8 +28,9 @@ on:
 
 env:
   DATABRICKS_BUNDLE_ENGINE: direct
-  DATABRICKS_CLI_VERSION: '0.240.0'
-  BUNDLE_VERSION: '0.240.0'
+  # Lakeflow Spark Declarative Pipelines in bundles require CLI >= 0.283.0 (see pipelines bundle tutorial).
+  DATABRICKS_CLI_VERSION: '0.290.1'
+  BUNDLE_VERSION: '0.290.1'
 
 jobs:
   resolve:
@@ -100,6 +101,11 @@ jobs:
         run: |
           # --auto-approve: required in CI (no TTY). May apply destructive sync if resources were removed from the bundle since a prior deploy.
           databricks bundle deploy -t ${{ needs.resolve.outputs.target }} --auto-approve
+
+      - name: Summarize deployed bundle resources
+        run: |
+          echo "## Deployed resources (databricks bundle summary)" >> $GITHUB_STEP_SUMMARY
+          databricks bundle summary -t ${{ needs.resolve.outputs.target }} | tee -a $GITHUB_STEP_SUMMARY
 
       - name: Set data upload path
         id: diagnostics-volume
