@@ -6,6 +6,14 @@ bundle:
 
 # Workspace host: from DATABRICKS_HOST (CI) or CLI profile — omit here so env auth applies
 
+variables:
+  catalog:
+    description: Unity Catalog for pipeline output (diagnostics.lab_results)
+    default: cicd_with_vibe
+  lab_results_csv:
+    description: CSV path (volume); must exist before pipeline run
+    default: /Volumes/cicd_with_vibe/diagnostics/diagnostics_data/lab_results.csv
+
 include:
   - resources/*.yml
   - resources/pipelines/*.yml

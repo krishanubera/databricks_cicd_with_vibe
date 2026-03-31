@@ -1,0 +1,17 @@
+# Lakeflow Spark Declarative Pipeline: load lab_results.csv into UC (diagnostics schema).
+resources:
+  pipelines:
+    lab_results_dlt:
+      name: lab_results_dlt
+      catalog: ${var.catalog}
+      target: diagnostics
+      development: false
+      continuous: false
+      channel: CURRENT
+      edition: advanced
+      serverless: true
+      configuration:
+        "pipelines.lab_results_csv": ${var.lab_results_csv}
+      libraries:
+        - file:
+            path: ./src/pipelines/lab_results.py
