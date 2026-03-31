@@ -7,8 +7,9 @@ bundle:
 # Workspace host: from DATABRICKS_HOST (CI) or CLI profile — omit here so env auth applies
 
 include:
+  - resources/*.yml
+  - resources/pipelines/*.yml
   - resources/jobs/**/*.yml
-  - resources/pipelines/**/*.yml
   - resources/models/**/*.yml
   - resources/apps/**/*.yml
 

@@ -8,7 +8,7 @@ resources:
       development: false
       serverless: true
       continuous: false
-      edition: ADVANCED
+      edition: advanced
       libraries:
         - file:
             path: ../../src/pipelines/diagnostics_lab_results_pipeline.py
