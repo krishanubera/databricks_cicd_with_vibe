@@ -9,9 +9,9 @@ bundle:
 include:
   - resources/*.yml
   - resources/pipelines/*.yml
-  - resources/jobs/**/*.yml
-  - resources/models/**/*.yml
-  - resources/apps/**/*.yml
+  - resources/jobs/*.yml
+  - resources/models/*.yml
+  - resources/apps/*.yml
 
 # Environments (use: databricks bundle deploy -t dev --profile <profile>)
 # /Shared/.bundle/... is world-writable; permissions below acknowledge intentional shared access (CLI warning).
