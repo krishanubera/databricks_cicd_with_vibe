@@ -107,6 +107,11 @@ jobs:
           echo "## Deployed resources (databricks bundle summary)" >> $GITHUB_STEP_SUMMARY
           databricks bundle summary -t ${{ needs.resolve.outputs.target }} | tee -a $GITHUB_STEP_SUMMARY
 
+      - name: List pipelines in workspace (API check)
+        run: |
+          echo "## Workspace pipelines (pipelines list-pipelines)" >> $GITHUB_STEP_SUMMARY
+          databricks pipelines list-pipelines -t ${{ needs.resolve.outputs.target }} -o json --max-results 100 | tee -a $GITHUB_STEP_SUMMARY
+
       - name: Set data upload path
         id: diagnostics-volume
         run: |

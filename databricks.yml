@@ -6,6 +6,11 @@ bundle:
 
 # Workspace host: from DATABRICKS_HOST (CI) or CLI profile — omit here so env auth applies
 
+include:
+  - resources/jobs/**/*.yml
+  - resources/models/**/*.yml
+  - resources/apps/**/*.yml
+
 # Environments (use: databricks bundle deploy -t dev --profile <profile>)
 # /Shared/.bundle/... is world-writable; permissions below acknowledge intentional shared access (CLI warning).
 targets:
@@ -36,8 +41,20 @@ targets:
     workspace:
       root_path: /Shared/.bundle/${bundle.name}/prod
 
-include:
-  - resources/jobs/**/*.yml
-  - resources/pipelines/**/*.yml
-  - resources/models/**/*.yml
-  - resources/apps/**/*.yml
+# Lakeflow pipeline: define here so library paths are relative to the bundle root (src/...).
+resources:
+  pipelines:
+    diagnostics_lab_results_pipeline:
+      name: diagnostics_lab_results_pipeline
+      catalog: cicd_with_vibe
+      target: diagnostics
+      channel: CURRENT
+      development: false
+      serverless: true
+      continuous: false
+      edition: CORE
+      libraries:
+        - notebook:
+            path: src/pipelines/diagnostics_lab_results_pipeline.py
+      configuration:
+        bundle.sourcePath: /Workspace/${workspace.file_path}/src
