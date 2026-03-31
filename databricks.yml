@@ -54,7 +54,7 @@ resources:
       continuous: false
       edition: CORE
       libraries:
-        - notebook:
+        - file:
             path: src/pipelines/diagnostics_lab_results_pipeline.py
       configuration:
         bundle.sourcePath: /Workspace/${workspace.file_path}/src
