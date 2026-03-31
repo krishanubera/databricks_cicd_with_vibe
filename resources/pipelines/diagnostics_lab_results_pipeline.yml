@@ -1,0 +1,17 @@
+resources:
+  pipelines:
+    diagnostics_lab_results_pipeline:
+      name: diagnostics_lab_results_pipeline
+      catalog: cicd_with_vibe
+      target: diagnostics
+      channel: CURRENT
+      development: false
+      serverless: true
+      continuous: false
+      edition: ADVANCED
+      libraries:
+        # Paths are relative to this file (resources/pipelines/), not the bundle root.
+        - file:
+            path: ../../src/pipelines/diagnostics_lab_results_pipeline.py
+      configuration:
+        bundle.sourcePath: /Workspace/${workspace.file_path}/src

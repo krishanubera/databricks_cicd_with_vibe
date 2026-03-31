@@ -8,6 +8,7 @@ bundle:
 
 include:
   - resources/jobs/**/*.yml
+  - resources/pipelines/**/*.yml
   - resources/models/**/*.yml
   - resources/apps/**/*.yml
 
@@ -40,21 +41,3 @@ targets:
         level: CAN_MANAGE
     workspace:
       root_path: /Shared/.bundle/${bundle.name}/prod
-
-# Lakeflow pipeline: define here so library paths are relative to the bundle root (src/...).
-resources:
-  pipelines:
-    diagnostics_lab_results_pipeline:
-      name: diagnostics_lab_results_pipeline
-      catalog: cicd_with_vibe
-      target: diagnostics
-      channel: CURRENT
-      development: false
-      serverless: true
-      continuous: false
-      edition: ADVANCED
-      libraries:
-        - file:
-            path: src/pipelines/diagnostics_lab_results_pipeline.py
-      configuration:
-        bundle.sourcePath: /Workspace/${workspace.file_path}/src
