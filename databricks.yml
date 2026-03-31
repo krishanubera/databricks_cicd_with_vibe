@@ -52,7 +52,7 @@ resources:
       development: false
       serverless: true
       continuous: false
-      edition: CORE
+      edition: ADVANCED
       libraries:
         - file:
             path: src/pipelines/diagnostics_lab_results_pipeline.py
