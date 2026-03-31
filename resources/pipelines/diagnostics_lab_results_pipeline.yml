@@ -11,6 +11,4 @@ resources:
       edition: ADVANCED
       libraries:
         - file:
-            path: src/pipelines/diagnostics_lab_results_pipeline.py
-      configuration:
-        bundle.sourcePath: /Workspace/${workspace.file_path}/src
+            path: ../../src/pipelines/diagnostics_lab_results_pipeline.py
