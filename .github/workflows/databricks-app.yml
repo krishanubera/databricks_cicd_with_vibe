@@ -132,10 +132,6 @@ jobs:
             echo "✅ Uploaded ${uploaded} CSV file(s) to ${VOLUME_PATH}/"
           fi
 
-      - name: Run diagnostics lab-results pipeline refresh
-        run: |
-          databricks bundle run diagnostics_lab_results_pipeline -t ${{ needs.resolve.outputs.target }}
-
       - name: Deployment summary
         run: |
           echo "## App bundle deployment" >> $GITHUB_STEP_SUMMARY
@@ -150,4 +146,3 @@ jobs:
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Event**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Volume upload**: \`${{ steps.diagnostics-volume.outputs.volume_path }}/\` ← \`data/*.csv\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Pipeline refresh**: \`diagnostics_lab_results_pipeline\`" >> $GITHUB_STEP_SUMMARY

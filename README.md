@@ -73,7 +73,7 @@ Add these **repository secrets** (host + token per workspace):
 | `DATABRICKS_TEST_HOST` / `DATABRICKS_TEST_TOKEN` | Test |
 | `DATABRICKS_PROD_HOST` / `DATABRICKS_PROD_TOKEN` | Prod |
 
-The workflow uploads `data/*.csv` to `dbfs:/Volumes/cicd_with_vibe/diagnostics/diagnostics_data` and runs the `diagnostics_lab_results_pipeline` Lakeflow Declarative Pipeline, which materializes `cicd_with_vibe.diagnostics.lab_results`. **Create the catalog, schema, and managed volume in Unity Catalog yourself** (or change paths/catalog in bundle resources to match your environment).
+The workflow uploads `data/*.csv` to `dbfs:/Volumes/cicd_with_vibe/diagnostics/diagnostics_data` and deploys the bundle (including the `diagnostics_lab_results_pipeline` Lakeflow Declarative Pipeline definition). It does **not** trigger a pipeline run; start a refresh in the workspace when you want to materialize `cicd_with_vibe.diagnostics.lab_results`. **Create the catalog, schema, and managed volume in Unity Catalog yourself** (or change paths/catalog in bundle resources to match your environment).
 
 ### Deploy notes
 
