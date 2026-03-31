@@ -1,4 +1,7 @@
 # App bundle at repo root (jobs, pipelines, …) + optional CSV upload to a volume path you manage.
+# Each bundle target (dev / test / prod) maps to a GitHub Environment of the same name.
+# Configure each environment (Settings → Environments): variable DATABRICKS_HOST, secret DATABRICKS_TOKEN.
+# Create dev, test, and prod environments before runs that resolve to each target; test is used for release_* / PR-to-release_* flows.
 
 name: Deploy app bundle
 
@@ -7,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Bundle target (dev / test / prod workspace)'
+        description: 'Bundle target (must match a GitHub Environment name)'
         required: true
         default: 'prod'
         type: choice
@@ -25,10 +28,31 @@ on:
 
 env:
   DATABRICKS_BUNDLE_ENGINE: direct
+  DATABRICKS_CLI_VERSION: '0.240.0'
+  BUNDLE_VERSION: '0.240.0'
 
 jobs:
-  deploy:
+  resolve:
     runs-on: ubuntu-latest
+    outputs:
+      target: ${{ steps.set-target.outputs.target }}
+    steps:
+      - id: set-target
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "target=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "pull_request" ] && [[ "${{ github.base_ref }}" == release_* ]]; then
+            echo "target=test" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/heads/release_* ]]; then
+            echo "target=test" >> $GITHUB_OUTPUT
+          else
+            echo "target=dev" >> $GITHUB_OUTPUT
+          fi
+
+  deploy:
+    needs: resolve
+    runs-on: ubuntu-latest
+    environment: ${{ needs.resolve.outputs.target }}
     permissions:
       contents: read
       id-token: write
@@ -44,57 +68,25 @@ jobs:
 
       - name: Install Databricks CLI
         run: |
-          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
-          echo "$HOME/.databricks/bin" >> $GITHUB_PATH
+          if [ "$BUNDLE_VERSION" != "$DATABRICKS_CLI_VERSION" ]; then
+            echo "BUNDLE_VERSION ($BUNDLE_VERSION) must match DATABRICKS_CLI_VERSION ($DATABRICKS_CLI_VERSION)."
+            exit 1
+          fi
+          curl -fsSL "https://raw.githubusercontent.com/databricks/setup-cli/v${DATABRICKS_CLI_VERSION}/install.sh" | sh
 
       - name: Verify Databricks CLI installation
         run: |
+          echo "Pinned bundle/CLI intent: $BUNDLE_VERSION"
           databricks --version
           databricks bundle version
 
-      - name: Set deployment target
-        id: set-target
-        run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "target=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" == "pull_request" ] && [[ "${{ github.base_ref }}" == release_* ]]; then
-            echo "target=test" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.ref }}" == refs/heads/release_* ]]; then
-            echo "target=test" >> $GITHUB_OUTPUT
-          else
-            echo "target=dev" >> $GITHUB_OUTPUT
-          fi
-
       - name: Configure Databricks authentication
         env:
-          DEV_HOST: ${{ secrets.DATABRICKS_DEV_HOST }}
-          DEV_TOKEN: ${{ secrets.DATABRICKS_DEV_TOKEN }}
-          TEST_HOST: ${{ secrets.DATABRICKS_TEST_HOST }}
-          TEST_TOKEN: ${{ secrets.DATABRICKS_TEST_TOKEN }}
-          PROD_HOST: ${{ secrets.DATABRICKS_PROD_HOST }}
-          PROD_TOKEN: ${{ secrets.DATABRICKS_PROD_TOKEN }}
+          H: ${{ vars.DATABRICKS_HOST }}
+          T: ${{ secrets.DATABRICKS_TOKEN }}
         run: |
-          TARGET="${{ steps.set-target.outputs.target }}"
-          case "$TARGET" in
-            dev)
-              H="$DEV_HOST"; T="$DEV_TOKEN"
-              MISSING_MSG="Set repository secrets: DATABRICKS_DEV_HOST and DATABRICKS_DEV_TOKEN"
-              ;;
-            test)
-              H="$TEST_HOST"; T="$TEST_TOKEN"
-              MISSING_MSG="Set repository secrets: DATABRICKS_TEST_HOST and DATABRICKS_TEST_TOKEN"
-              ;;
-            prod)
-              H="$PROD_HOST"; T="$PROD_TOKEN"
-              MISSING_MSG="Set repository secrets: DATABRICKS_PROD_HOST and DATABRICKS_PROD_TOKEN"
-              ;;
-            *)
-              echo "❌ Unknown bundle target: $TARGET"
-              exit 1
-              ;;
-          esac
           if [ -z "$H" ] || [ -z "$T" ]; then
-            echo "❌ $MISSING_MSG (host and token required for this environment)."
+            echo "❌ Set GitHub Environment variable DATABRICKS_HOST and secret DATABRICKS_TOKEN for environment '${{ needs.resolve.outputs.target }}'."
             exit 1
           fi
           echo "DATABRICKS_HOST=$H" >> $GITHUB_ENV
@@ -102,12 +94,12 @@ jobs:
 
       - name: Validate app bundle
         run: |
-          databricks bundle validate -t ${{ steps.set-target.outputs.target }}
+          databricks bundle validate -t ${{ needs.resolve.outputs.target }}
 
       - name: Deploy app bundle
         run: |
           # --auto-approve: required in CI (no TTY). May apply destructive sync if resources were removed from the bundle since a prior deploy.
-          databricks bundle deploy -t ${{ steps.set-target.outputs.target }} --auto-approve
+          databricks bundle deploy -t ${{ needs.resolve.outputs.target }} --auto-approve
 
       - name: Set data upload path
         id: diagnostics-volume
@@ -144,7 +136,8 @@ jobs:
         run: |
           echo "## App bundle deployment" >> $GITHUB_STEP_SUMMARY
           echo "- **Bundle**: \`databricks_cicd_with_vibe\` (repo root)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Target**: ${{ steps.set-target.outputs.target }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Databricks CLI (pinned)**: ${{ env.DATABRICKS_CLI_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target**: ${{ needs.resolve.outputs.target }}" >> $GITHUB_STEP_SUMMARY
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             echo "- **PR**: \`${{ github.head_ref }}\` → \`${{ github.base_ref }}\`" >> $GITHUB_STEP_SUMMARY
           else
