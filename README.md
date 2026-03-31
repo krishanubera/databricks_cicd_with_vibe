@@ -73,7 +73,7 @@ Add these **repository secrets** (host + token per workspace):
 | `DATABRICKS_TEST_HOST` / `DATABRICKS_TEST_TOKEN` | Test |
 | `DATABRICKS_PROD_HOST` / `DATABRICKS_PROD_TOKEN` | Prod |
 
-The workflow uploads `data/*.csv` to `dbfs:/Volumes/cicd_with_vibe/diagnostics/diagnostics_data`. **Create the catalog, schema, and managed volume in Unity Catalog yourself** (or change the workflow path to match what you create).
+The workflow uploads `data/*.csv` to `dbfs:/Volumes/cicd_with_vibe/diagnostics/diagnostics_data` and runs the `diagnostics_lab_results_pipeline` Lakeflow Declarative Pipeline, which materializes `cicd_with_vibe.diagnostics.lab_results`. **Create the catalog, schema, and managed volume in Unity Catalog yourself** (or change paths/catalog in bundle resources to match your environment).
 
 ### Deploy notes
 

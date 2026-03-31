@@ -1,0 +1,12 @@
+resources:
+  pipelines:
+    diagnostics_lab_results_pipeline:
+      name: diagnostics_lab_results_pipeline
+      catalog: cicd_with_vibe
+      schema: diagnostics
+      channel: CURRENT
+      development: false
+      serverless: true
+      continuous: false
+      libraries:
+        - file: ../src/pipelines/diagnostics_lab_results_pipeline.py
