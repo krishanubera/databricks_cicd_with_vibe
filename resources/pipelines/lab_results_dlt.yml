@@ -14,4 +14,4 @@ resources:
         "pipelines.lab_results_csv": ${var.lab_results_csv}
       libraries:
         - file:
-            path: ./src/pipelines/lab_results.py
+            path: ../../src/pipelines/lab_results.py
