@@ -2,7 +2,7 @@
 
 This repository is a **hands-on demo** of **vibe coding in Cursor** to produce a **Lakeflow Spark Declarative Pipeline** defined as a **Databricks Asset Bundle (DAB)**, then **deploying** it with **GitHub Actions**. The workflow **deploys the bundle and uploads CSVs to a volume**; it does **not** run the pipeline in CI by default—you **refresh the pipeline manually** in the workspace when you want to materialize tables.
 
-**Session deck:** [docs/demo-session.md](docs/demo-session.md)
+**Session deck:** [docs/demo-session.md](docs/demo-session.md) · **POC walkthrough (blog-style):** [docs/vibe-coding-databricks-bundle-poc.md](docs/vibe-coding-databricks-bundle-poc.md)
 
 Documentation in this repo covers the demo story and setup only; it does **not** change application bundle YAML, Python, or workflow files.
 
@@ -60,9 +60,11 @@ The **demo** centers on the **pipeline resource YAML** under `resources/pipeline
 
 ```
 databricks_cicd_with_vibe/
+├── LICENSE                     # MIT
 ├── databricks.yml              # App bundle
 ├── docs/
-│   └── demo-session.md         # Session presentation (this demo)
+│   ├── demo-session.md         # Session presentation (this demo)
+│   └── vibe-coding-databricks-bundle-poc.md  # POC / blog-style walkthrough
 ├── resources/
 │   ├── jobs/
 │   ├── pipelines/              # Pipeline bundle YAML (e.g. diagnostics pipeline)
@@ -141,4 +143,4 @@ After deploy, start a **pipeline refresh** in the workspace when you want to mat
 
 ## License
 
-Use and adapt as needed for your organization.
+This project is licensed under the [MIT License](LICENSE). You may use, copy, modify, and distribute the code and documentation under those terms.
