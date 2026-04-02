@@ -2,9 +2,9 @@
 
 This repository is a **hands-on demo** of **vibe coding in Cursor** to produce a **Lakeflow Spark Declarative Pipeline** defined as a **Databricks Asset Bundle (DAB)**, then **deploying** it with **GitHub Actions**. The workflow **deploys the bundle and uploads CSVs to a volume**; it does **not** run the pipeline in CI by default—you **refresh the pipeline manually** in the workspace when you want to materialize tables.
 
-**Session deck:** [docs/demo-session.md](docs/demo-session.md) · **POC walkthrough (blog-style):** [docs/vibe-coding-databricks-bundle-poc.md](docs/vibe-coding-databricks-bundle-poc.md)
+**Session deck:** [docs/demo-session.md](docs/demo-session.md) · **POC walkthrough:** [docs/vibe-coding-databricks-bundle-poc.md](docs/vibe-coding-databricks-bundle-poc.md)
 
-Documentation in this repo covers the demo story and setup only; it does **not** change application bundle YAML, Python, or workflow files.
+This repo is **public** so you can **fork** it and run the flow in your own GitHub account. Documentation here covers the demo story and setup only; it does **not** change application bundle YAML, Python, or workflow files.
 
 ## What is Vibe Coding?
 
@@ -64,7 +64,7 @@ databricks_cicd_with_vibe/
 ├── databricks.yml              # App bundle
 ├── docs/
 │   ├── demo-session.md         # Session presentation (this demo)
-│   └── vibe-coding-databricks-bundle-poc.md  # POC / blog-style walkthrough
+│   └── vibe-coding-databricks-bundle-poc.md  # Casual POC walkthrough
 ├── resources/
 │   ├── jobs/
 │   ├── pipelines/              # Pipeline bundle YAML (e.g. diagnostics pipeline)
@@ -82,36 +82,59 @@ databricks_cicd_with_vibe/
 - **Cursor** – [cursor.com](https://cursor.com)
 - **Databricks workspace** – and a personal or service principal token for the CLI
 - **Databricks CLI** – `databricks bundle` support (`databricks bundle -h`)
-- **GitHub** – Actions enabled; **Environments** configured (see below)
+- **GitHub** – A **fork** of this repo (recommended), Actions enabled, and **Environments** with variables/secrets (see [GitHub Actions setup](#github-actions-setup))
 
 ## Quick Start
 
-1. **Clone and open in Cursor**
+1. **Fork this repo (recommended), then clone your fork and open it in Cursor**
    ```bash
-   git clone <your-repo-url>
+   git clone <your-fork-url>
    cd databricks_cicd_with_vibe
    cursor .
    ```
+   Working from a **fork** keeps your tokens, branches, and workflow runs under your GitHub account. You can use a single branch on the fork (for example `feature_your_poc`) instead of contributing back to the upstream repo.
 
-2. **Configure the bundle** – Root [`databricks.yml`](databricks.yml) and files under `resources/` (including `resources/pipelines/`).
+2. **Configure GitHub Environments** (needed before Actions can deploy)—see [GitHub Actions setup](#github-actions-setup) below.
 
-3. **Validate locally**
+3. **Configure the bundle** – Root [`databricks.yml`](databricks.yml) and files under `resources/` (including `resources/pipelines/`).
+
+4. **Validate locally**
    ```bash
    databricks bundle validate -t dev --profile <your-profile>
    ```
 
-4. **Deploy via GitHub Actions** – **Deploy app bundle** on `feature_*` / `release_*` pushes or PRs to `release_*`, or run manually (see [.github/workflows/README.md](.github/workflows/README.md)).
+5. **Deploy via GitHub Actions** – **Deploy app bundle** on `feature_*` / `release_*` pushes or PRs to `release_*`, or run manually (see [.github/workflows/README.md](.github/workflows/README.md)).
 
 ## GitHub Actions setup
 
-The **Deploy app bundle** workflow uses a **GitHub Environment** per bundle target (`dev`, `test`, `prod`). For each environment, configure:
+The **Deploy app bundle** workflow reads **Databricks host and token** from **GitHub Environment** configuration—not from repository-level secrets alone. You need **one GitHub Environment per bundle target** the workflow will use: **`dev`**, **`test`**, and **`prod`** (names must match; the job sets `environment: ${{ needs.resolve.outputs.target }}`).
 
-| Setting | Type | Purpose |
-|---------|------|---------|
-| `DATABRICKS_HOST` | Environment **variable** | Workspace URL (e.g. `https://xxx.cloud.databricks.com`) |
-| `DATABRICKS_TOKEN` | Environment **secret** | Personal access token or service principal token |
+### Add each environment, variable, and secret
 
-Create the **dev**, **test**, and **prod** environments before runs that resolve to each target. Details: [.github/workflows/README.md](.github/workflows/README.md).
+For **each** of `dev`, `test`, and `prod` that you plan to use:
+
+1. In GitHub, open **your fork** (or repo) → **Settings** → **Environments**.
+2. Click **New environment**, enter the name **`dev`**, **Save** (repeat for **`test`** and **`prod`** if you need them).
+3. Open the environment (e.g. **`dev`**).
+4. Under **Environment variables**, **Add environment variable**:
+   - **Name:** `DATABRICKS_HOST`
+   - **Value:** your Databricks workspace URL, e.g. `https://dbc-xxxxxxxx.cloud.databricks.com` (no trailing slash unless your org standardizes it—use the host your CLI uses).
+5. Under **Environment secrets**, **Add secret**:
+   - **Name:** `DATABRICKS_TOKEN`
+   - **Value:** a personal access token or service principal token with rights to deploy bundles and upload files to the paths your workflow uses.
+
+Repeat steps 3–5 for **`test`** and **`prod`** if those targets should deploy to different workspaces or credentials.
+
+Optional: add **deployment protection rules** (required reviewers, wait timers) per environment if your org requires them.
+
+Summary:
+
+| Setting | Where | Type |
+|---------|--------|------|
+| `DATABRICKS_HOST` | Environment **variables** | Workspace URL |
+| `DATABRICKS_TOKEN` | Environment **secrets** | PAT or service principal token |
+
+More on when the workflow runs: [.github/workflows/README.md](.github/workflows/README.md).
 
 ### What CI does (and does not do)
 

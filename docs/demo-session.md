@@ -111,7 +111,7 @@ Create a Databricks Asset Bundle pipeline from scratch for Lakeflow Spark Declar
 - [Databricks Asset Bundles](https://docs.databricks.com/dev-tools/bundles/index.html)
 - [Databricks CLI](https://docs.databricks.com/dev-tools/cli/index.html)
 - [Cursor](https://cursor.com)
-- [POC walkthrough (blog-style)](vibe-coding-databricks-bundle-poc.md)
+- [POC walkthrough](vibe-coding-databricks-bundle-poc.md)
 
 ---
 
