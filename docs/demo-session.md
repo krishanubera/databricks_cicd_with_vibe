@@ -1,13 +1,16 @@
-# Vibe coding + Databricks Asset Bundles + GitHub Actions
+# Cursor, vibe coding, and CI/CD for Databricks ETL
 
-**Hands-on demo:** Lakeflow Spark Declarative Pipelines
+**Session purpose:** Show how to use **Cursor** to develop **Databricks ETL** processes through **vibe coding** (iterative, AI-assisted development), then **package and deploy** that code into Databricks environments using **Databricks Asset Bundles** and **GitHub Actions**.
+
+**Hands-on demo:** Lakeflow Spark Declarative Pipelines as the ETL example.
 
 ---
 
 ## Agenda
 
-- What vibe coding means in this session
-- End-to-end flow: Cursor → workspace
+- Session goals: develop with Cursor → ship with bundles and CI
+- What vibe coding means here
+- End-to-end flow: Cursor → Git → GitHub Actions → Databricks
 - Demo goal: pipeline from volume CSV to diagnostics table
 - The demo prompt and constraints
 - Repo layout and what CI does
@@ -15,30 +18,46 @@
 
 ---
 
+## Session goals (two parts)
+
+### 1. Develop ETL with Cursor (vibe coding)
+
+- Use **natural language** in Cursor to shape pipelines, bundle config, and Python
+- **Iterate quickly**: describe outcomes, review generated code, steer until it matches your data and standards
+- Typical artifacts: `databricks.yml`, pipeline YAML under `resources/pipelines/`, ETL logic in `src/`
+
+### 2. Package and deploy with Databricks Asset Bundles + GitHub Actions
+
+- **Databricks Asset Bundles** define the deployable unit (resources, paths, targets) so the same repo represents what runs in each environment
+- **GitHub Actions** automate **validate**, **deploy**, and supporting steps (e.g. uploading seed data to a volume)
+- Result: committed code flows from PR/main into a **Databricks workspace** in a repeatable way
+
+---
+
 ## What is vibe coding?
 
 - Iterative, AI-assisted development in **Cursor**
-- Describe outcomes in natural language; **review and steer**
-- Bundle YAML and Python evolve through conversation
+- Describe ETL outcomes in natural language; **review and steer** the assistant
+- Bundle YAML and Python evolve through conversation until production-ready
 
 ---
 
 ## End-to-end flow
 
-1. **Cursor** — Natural-language iteration on bundle and pipeline code
+1. **Cursor** — Vibe coding: natural-language iteration on bundle and ETL/pipeline code
 2. **Git repository** — `databricks.yml`, `resources/pipelines/`, `src/`
 3. **GitHub Actions** — `bundle validate`, `bundle deploy`, CSV upload to volume
-4. **Databricks workspace** — **Manual** pipeline refresh to materialize tables
+4. **Databricks workspace** — **Manual** pipeline refresh to materialize tables (unless you add automation)
 
 ```mermaid
 flowchart LR
-  Cursor[Cursor]
+  Cursor[Cursor_vibe_coding]
   Repo[Git_repo]
-  GHA[GitHub_Actions]
+  GHA[GitHub_Actions_DAB]
   WS[Databricks_workspace]
-  Cursor --> Repo
-  Repo --> GHA
-  GHA -->|validate_deploy_upload| WS
+  Cursor -->|develop_ETL| Repo
+  Repo -->|validate_deploy| GHA
+  GHA -->|bundle_deploy_upload| WS
   WS -->|manual_refresh| Table[UC_table]
 ```
 
@@ -46,29 +65,41 @@ flowchart LR
 
 ## Demo goal
 
-- **Lakeflow Spark Declarative Pipeline** (Databricks Asset Bundle)
+- **Lakeflow Spark Declarative Pipeline** (Databricks Asset Bundle) as a concrete ETL pattern
 - Load **`lab_results.csv`** into a table in the **`diagnostics`** schema
 - Source file: read from **Unity Catalog volume** (CSV uploaded from `data/` by CI)
 
 ---
 
-## The demo prompt (abbreviated)
+## Session demo prompt (vibe)
 
-Create a Databricks Asset Bundle pipeline from scratch for Lakeflow Spark Declarative Pipelines to load `lab_results.csv` into a table in the diagnostics schema; lab results taken from the volume.
+Use this prompt (or equivalent) when driving the live demo in Cursor:
 
-**Full verbatim prompt:** see [README.md](../README.md) → *Session demo prompt (vibe)*.
+```
+Create a Databricks Asset Bundle pipeline from scratch for Lakeflow Spark Declarative Pipelines to load lab_results.csv into a table in the diagnostics schema. The lab result to be taken from the volume.
 
----
+Constraints
+No bundle run in CI unless asked.
+use Serverless with advance edition
+Keep code minimal: one @dlt.table that loads the CSV once.
+Keep the code in py file not notebook
+Make sure the yml file config uses 'file' not notebook
+keep the py file and yml file in their designated directories in current folder structures.
+Define the python code path in yml in so that it resolves the path relative to that YAML file's directory
 
-## Constraints checklist
+don't search online
+keep the catalog and schema name hardcoded
+```
 
-- **No** `bundle run` in CI unless explicitly requested
-- **Serverless** pipeline + **Lakeflow Advanced** edition
-- **Minimal:** one `@dlt.table` loading the CSV once
-- **Python** `.py` file; YAML uses `libraries` **`file:`** not `notebook`
-- **`file.path`** relative to **that pipeline YAML file’s directory**
-- **No web search** during the demo
-- **Catalog and schema names hardcoded** in code
+### Constraints (as given to the assistant)
+
+- **No `bundle run` in CI** unless you explicitly ask for it.
+- **Serverless** pipeline with **Lakeflow Advanced** edition (required for serverless pipelines).
+- **Minimal code:** a single `@dlt.table` that loads the CSV once.
+- **Python module (`.py`)**, not a notebook; pipeline `libraries` use **`file`**, not `notebook`, in YAML.
+- **Conventional layout:** pipeline bundle YAML under `resources/pipelines/`, pipeline Python under the repo’s `src/…` layout; **`file.path`** in included YAML resolves **relative to that YAML file’s directory** (not the bundle root).
+- **No web search** during the demo (assistant should not search online).
+- **Catalog and schema names hardcoded** in code as specified for the demo.
 
 ---
 
@@ -76,11 +107,11 @@ Create a Databricks Asset Bundle pipeline from scratch for Lakeflow Spark Declar
 
 | Area | Role |
 |------|------|
-| `databricks.yml` | Bundle root |
+| `databricks.yml` | Bundle root (packaging / targets) |
 | `resources/pipelines/` | Pipeline resource YAML |
-| `src/` | Pipeline Python (paths resolve from pipeline YAML) |
+| `src/` | ETL / pipeline Python (paths resolve from pipeline YAML) |
 | `data/` | CSV files for workflow upload |
-| `.github/workflows/` | Deploy app bundle (validate, deploy, upload) |
+| `.github/workflows/` | Validate, deploy bundle, upload data to volume |
 
 ---
 
@@ -115,4 +146,4 @@ Create a Databricks Asset Bundle pipeline from scratch for Lakeflow Spark Declar
 
 ---
 
-*Session notes — see root [README.md](../README.md) for setup and the full demo prompt.*
+*Session notes — see root [README.md](../README.md) for fork/setup and GitHub Actions configuration.*
