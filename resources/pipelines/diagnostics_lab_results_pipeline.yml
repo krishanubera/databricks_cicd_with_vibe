@@ -1,0 +1,12 @@
+# Paths in this file (e.g. libraries.file.path) resolve relative to this YAML file's directory.
+resources:
+  pipelines:
+    diagnostics_lab_results_pipeline:
+      name: diagnostics_lab_results_pipeline
+      catalog: cicd_with_vibe
+      schema: diagnostics
+      serverless: true
+      edition: ADVANCED
+      libraries:
+        - file:
+            path: ../../src/pipelines/lab_results_pipeline.py
